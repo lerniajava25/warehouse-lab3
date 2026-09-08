@@ -61,4 +61,15 @@ public class WarehouseService {
         }
         return null;
     }
+
+    public Product deleteProduct(String id) {
+        for (Product product : products) {
+            if (product.getId().equals(id)) {
+                products.remove(product);
+
+                return product;
+            }
+        }
+        return null;
+    }
 }

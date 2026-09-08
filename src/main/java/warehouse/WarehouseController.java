@@ -49,4 +49,14 @@ public class WarehouseController {
         return ResponseEntity.ok(updatedProduct);
     }
 
+    @DeleteMapping("/products/{id}")
+    public ResponseEntity<Product> deleteProduct(@PathVariable String id) {
+        Product deletedProduct = warehouseService.deleteProduct(id);
+
+        if (deletedProduct == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(deletedProduct);
+    }
+
 }
