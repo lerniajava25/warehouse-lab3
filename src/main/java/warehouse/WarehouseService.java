@@ -47,4 +47,18 @@ public class WarehouseService {
 
         return newProduct;
     }
+
+    public Product updateProduct(String id, Product updateProduct) {
+        for (Product product : products) {
+            if (product.getId().equals(id)) {
+
+                product.setName(updateProduct.getName());
+                product.setPrice(updateProduct.getPrice());
+                product.setQuantity(updateProduct.getQuantity());
+
+                return product;
+            }
+        }
+        return null;
+    }
 }

@@ -34,4 +34,19 @@ public class WarehouseController {
     public Product createProduct(@RequestBody Product product) {
         return warehouseService.createProduct(product);
     }
+
+    @PutMapping("/products/{id}")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable String id,
+            @RequestBody Product product
+    ) {
+        Product updatedProduct = warehouseService.updateProduct(id, product);
+
+        if (updatedProduct == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(updatedProduct);
+    }
+
 }
