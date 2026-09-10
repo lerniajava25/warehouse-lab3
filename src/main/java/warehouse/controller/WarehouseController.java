@@ -1,4 +1,7 @@
-package warehouse;
+package warehouse.controller;
+
+import warehouse.domain.Product;
+import warehouse.service.WarehouseService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +34,8 @@ public class WarehouseController {
     }
 
     @PostMapping("/products")
-    public Product createProduct(@RequestBody Product product) {
-        return warehouseService.createProduct(product);
+    public Product addProduct(@RequestBody Product product) {
+        return warehouseService.addProduct(product);
     }
 
     @PutMapping("/products/{id}")
@@ -58,5 +61,31 @@ public class WarehouseController {
         }
         return ResponseEntity.ok(deletedProduct);
     }
+
+    @GetMapping("/products/category/{category}")
+    public List<Product> getProductsByCategory(@PathVariable String category) {
+        return warehouseService.getProductsByCategory(category);
+    }
+
+    @GetMapping("/products/low-stocks")
+    public List<Product> getLowStockProducts(@RequestParam int threshold) {
+        return warehouseService.getProductsBelowStock(threshold);
+    }
+
+    @GetMapping("/products/value")
+    public double getProductValue() {
+        return warehouseService.calculateTotalWarehouseValue();
+    }
+
+    @GetMapping("products/category/{category}/average-price")
+    public double getProductValueByCategory(@PathVariable String category) {
+        return warehouseService.getAveragePriceByCategory(category);
+    }
+
+    @GetMapping("/products/top")
+    public List<Product> getTopExpensiveProducts(@RequestParam int n) {
+        return warehouseService.getTopExpensiveProducts(n);
+    }
+
 
 }
