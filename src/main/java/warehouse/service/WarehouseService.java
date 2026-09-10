@@ -5,7 +5,6 @@ import warehouse.domain.Product;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
@@ -73,35 +72,22 @@ public class WarehouseService {
     }
 
     public List<Product> getProductsByCategory(String category) {
-        return products.values().stream()
-                .filter(product -> product.getCategory().equalsIgnoreCase(category))
-                .toList();
+        return List.of();
     }
 
     public List<Product> getProductsBelowStock(int threshold) {
-        return products.values().stream()
-                .filter(product -> product.getQuantity() < threshold)
-                .toList();
+        return List.of();
     }
 
     public double calculateTotalWarehouseValue() {
-        return products.values().stream()
-                .mapToDouble(product -> product.getPrice() * product.getQuantity())
-                .sum();
+        return 0.0;
     }
 
     public double getAveragePriceByCategory(String category) {
-        return products.values().stream()
-                .filter(product -> product.getCategory().equalsIgnoreCase(category))
-                .mapToDouble(Product::getPrice)
-                .average()
-                .orElse(0.0);
+        return 0.0;
     }
 
     public List<Product> getTopExpensiveProducts(int n) {
-        return products.values().stream()
-                .sorted(Comparator.comparingDouble(Product::getPrice).reversed())
-                .limit(n)
-                .toList();
+        return List.of();
     }
 }
