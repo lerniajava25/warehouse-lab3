@@ -1,6 +1,9 @@
 package warehouse.controller;
 
 import warehouse.domain.Product;
+import warehouse.response.ApiError;
+import warehouse.response.AveragePriceResponse;
+import warehouse.response.InventoryValueResponse;
 import warehouse.service.WarehouseService;
 
 import org.springframework.http.ResponseEntity;
@@ -23,43 +26,66 @@ public class WarehouseController {
     }
 
     @GetMapping("/products/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable String id) {
+    public ResponseEntity<?> getProductById(@PathVariable String id) {
         Product product = warehouseService.getProductById(id);
 
         if (product == null) {
-            return ResponseEntity.notFound().build();
+            ApiError error = new ApiError(
+                    404,
+                    "Not Found",
+                    "Product not found: " + id
+            );
+
+            return ResponseEntity.status(404).body(error);
         }
 
         return ResponseEntity.ok(product);
     }
 
     @PostMapping("/products")
-    public Product addProduct(@RequestBody Product product) {
-        return warehouseService.addProduct(product);
+    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+        Product createdProduct = warehouseService.addProduct(product);
+
+        return ResponseEntity
+                .status(201)
+                .body(createdProduct);
     }
 
     @PutMapping("/products/{id}")
-    public ResponseEntity<Product> updateProduct(
+    public ResponseEntity<?> updateProduct(
             @PathVariable String id,
             @RequestBody Product product
     ) {
         Product updatedProduct = warehouseService.updateProduct(id, product);
 
         if (updatedProduct == null) {
-            return ResponseEntity.notFound().build();
+            ApiError error = new ApiError(
+                    404,
+                    "Not Found",
+                    "Product not found: " + id
+            );
+
+            return ResponseEntity.status(404).body(error);
         }
 
         return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/products/{id}")
-    public ResponseEntity<Product> deleteProduct(@PathVariable String id) {
+    public ResponseEntity<?> deleteProduct(@PathVariable String id) {
         Product deletedProduct = warehouseService.deleteProduct(id);
 
         if (deletedProduct == null) {
-            return ResponseEntity.notFound().build();
+            ApiError error = new ApiError(
+                    404,
+                    "Not Found",
+                    "Product not found: " + id
+            );
+
+            return ResponseEntity.status(404).body(error);
         }
-        return ResponseEntity.ok(deletedProduct);
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/products/category/{category}")
@@ -67,25 +93,52 @@ public class WarehouseController {
         return warehouseService.getProductsByCategory(category);
     }
 
-    @GetMapping("/products/low-stocks")
-    public List<Product> getLowStockProducts(@RequestParam int threshold) {
-        return warehouseService.getProductsBelowStock(threshold);
+    @GetMapping("/products/low-stock")
+    public ResponseEntity<?> getLowStockProducts(@RequestParam int threshold) {
+        if (threshold < 0) {
+            ApiError error = new ApiError(
+                    400,
+                    "Bad Request",
+                    "Threshold cannot be negative"
+            );
+
+            return ResponseEntity.status(400).body(error);
+        }
+
+        return ResponseEntity.ok(
+                warehouseService.getProductsBelowStock(threshold)
+        );
     }
 
     @GetMapping("/products/value")
-    public double getProductValue() {
-        return warehouseService.calculateTotalWarehouseValue();
+    public InventoryValueResponse getTotalWarehouseValue() {
+        double totalValue = warehouseService.calculateTotalWarehouseValue();
+
+        return new InventoryValueResponse(totalValue);
     }
 
-    @GetMapping("products/category/{category}/average-price")
-    public double getProductValueByCategory(@PathVariable String category) {
-        return warehouseService.getAveragePriceByCategory(category);
+    @GetMapping("/products/category/{category}/average-price")
+    public AveragePriceResponse getAveragePriceByCategory(@PathVariable String category) {
+        double averagePrice = warehouseService.getAveragePriceByCategory(category);
+
+        return new AveragePriceResponse(category, averagePrice);
     }
 
     @GetMapping("/products/top")
-    public List<Product> getTopExpensiveProducts(@RequestParam int n) {
-        return warehouseService.getTopExpensiveProducts(n);
-    }
+    public ResponseEntity<?> getTopExpensiveProducts(@RequestParam int n) {
+        if (n <= 0) {
+            ApiError error = new ApiError(
+                    400,
+                    "Bad Request",
+                    "n must be greater than 0"
+            );
 
+            return ResponseEntity.status(400).body(error);
+        }
+
+        return ResponseEntity.ok(
+                warehouseService.getTopExpensiveProducts(n)
+        );
+    }
 
 }
