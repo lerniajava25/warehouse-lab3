@@ -1,5 +1,6 @@
 package warehouse;
 
+import warehouse.response.ApiError;
 import org.junit.jupiter.api.Test;
 import warehouse.controller.WarehouseController;
 import warehouse.domain.Product;
@@ -41,21 +42,22 @@ class WarehouseControllerTest {
     }
     @Test
     void getProductByIdShouldReturn404WhenProductDoesNotExist() {
-
-        // Arrange
         WarehouseService warehouseService = mock(WarehouseService.class);
+        WarehouseController controller = new WarehouseController(warehouseService);
 
-        WarehouseController controller =
-                new WarehouseController(warehouseService);
+        when(warehouseService.getProductById("UNKNOWN")).thenReturn(null);
 
-        when(warehouseService.getProductById("UNKNOWN"))
-                .thenReturn(null);
-
-        // Act
         var response = controller.getProductById("UNKNOWN");
 
-        // Assert
         assertEquals(404, response.getStatusCode().value());
+
+        assertInstanceOf(ApiError.class, response.getBody());
+
+        ApiError error = (ApiError) response.getBody();
+
+        assertEquals(404, error.status());
+        assertEquals("Not Found", error.error());
+        assertEquals("Product not found: UNKNOWN", error.message());
 
         verify(warehouseService).getProductById("UNKNOWN");
     }
