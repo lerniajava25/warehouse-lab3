@@ -4,6 +4,7 @@ import warehouse.domain.Product;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,10 +24,10 @@ public class WarehouseService {
 
 
     public WarehouseService() {
-        Product keyboard = new Product("A1", "Keyboard", 499.99, 20, "Electronics");
+        Product keyboard = new Product("A1", "Keyboard", 499.99, 20, "Electronics", LocalDate.of(2026, 9, 1));
         products.put(keyboard.getId(), keyboard);
 
-        Product mouse = new Product("A2", "Mouse", 249.99, 15, "Electronics");
+        Product mouse = new Product("A2", "Mouse", 249.99, 15, "Electronics", LocalDate.of(2026, 9, 1));
         products.put(mouse.getId(), mouse);
     }
 
@@ -44,7 +45,8 @@ public class WarehouseService {
                 product.getName(),
                 product.getPrice(),
                 product.getQuantity(),
-                product.getCategory()
+                product.getCategory(),
+                product.getRegistrationDate()
         );
 
         products.put(newProduct.getId(), newProduct);
@@ -59,7 +61,8 @@ public class WarehouseService {
                         updateProduct.getName(),
                         updateProduct.getPrice(),
                         updateProduct.getQuantity(),
-                        updateProduct.getCategory()
+                        updateProduct.getCategory(),
+                        current.getRegistrationDate()
                 )
         );
     }
