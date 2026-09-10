@@ -53,18 +53,15 @@ public class WarehouseService {
     }
 
     public Product updateProduct(String id, Product updateProduct) {
-        Product product = products.get(id);
-
-        if (product == null) {
-            return null;
-        }
-
-        product.setName(updateProduct.getName());
-        product.setPrice(updateProduct.getPrice());
-        product.setQuantity(updateProduct.getQuantity());
-        product.setCategory(updateProduct.getCategory());
-
-        return product;
+        return products.computeIfPresent(id, (key, current) ->
+                new Product(
+                        current.getId(),
+                        updateProduct.getName(),
+                        updateProduct.getPrice(),
+                        updateProduct.getQuantity(),
+                        updateProduct.getCategory()
+                )
+        );
     }
 
     public Product deleteProduct(String id) {
