@@ -1,5 +1,6 @@
 package warehouse;
 
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import warehouse.domain.Product;
@@ -408,5 +409,41 @@ class WarehouseServiceTest {
                 warehouseService.deleteProduct("does-not-exist");
 
         assertNull(result);
+    }
+    @Test
+    void getProductsByCategoryShouldReturnEmptyListWhenCategoryDoesNotExist() {
+        List<Product> result = warehouseService.getProductsByCategory("DoesNotExist");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getProductsBelowStockShouldReturnEmptyListWhenNoProductsMatch() {
+        List<Product> result = warehouseService.getProductsBelowStock(0);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getAveragePriceByCategoryShouldHandleMissingCategory() {
+        double result = warehouseService.getAveragePriceByCategory("DoesNotExist");
+
+        assertEquals(0.0, result);
+    }
+
+    @Test
+    void getTopExpensiveProductsShouldReturnAllProductsWhenNIsLargerThanProductCount() {
+        int totalProducts = warehouseService.getAllProducts().size();
+
+        List<Product> result = warehouseService.getTopExpensiveProducts(totalProducts + 10);
+
+        assertEquals(totalProducts, result.size());
+    }
+
+    @Test
+    void getTopExpensiveProductsShouldReturnEmptyListWhenNIsZero() {
+        List<Product> result = warehouseService.getTopExpensiveProducts(0);
+
+        assertTrue(result.isEmpty());
     }
 }
