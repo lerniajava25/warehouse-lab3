@@ -2,6 +2,8 @@ package warehouse;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import warehouse.domain.Product;
+import warehouse.service.WarehouseService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,19 +20,29 @@ class WarehouseServiceTest {
     void addProductShouldAddProduct() {
 
         // Arrange
+        int productsBefore = warehouseService.getAllProducts().size();
+
         Product product = new Product(
                 "1",
                 "Laptop",
-                "Electronics",
                 10000.0,
-                5
+                5,
+                "Computers"
         );
 
         // Act
-        warehouseService.addProduct(product);
+        Product addedProduct = warehouseService.addProduct(product);
 
         // Assert
-        assertEquals(1, warehouseService.getProducts().size());
+        assertEquals(
+                productsBefore + 1,
+                warehouseService.getAllProducts().size()
+        );
+
+        assertEquals("Laptop", addedProduct.getName());
+        assertEquals(10000.0, addedProduct.getPrice());
+        assertEquals(5, addedProduct.getQuantity());
+        assertEquals("Computers", addedProduct.getCategory());
     }
 
     @Test
@@ -40,246 +52,361 @@ class WarehouseServiceTest {
         Product product = new Product(
                 "1",
                 "Laptop",
-                "Electronics",
                 10000.0,
-                5
+                5,
+                "Computers"
         );
 
-        warehouseService.addProduct(product);
+        Product addedProduct = warehouseService.addProduct(product);
 
         // Act
-        Product result = warehouseService.getProductById("1");
+        Product result =
+                warehouseService.getProductById(addedProduct.getId());
 
         // Assert
-        assertEquals(product, result);
+        assertNotNull(result);
+        assertEquals(addedProduct.getId(), result.getId());
+        assertEquals("Laptop", result.getName());
+        assertEquals(10000.0, result.getPrice());
+        assertEquals(5, result.getQuantity());
+        assertEquals("Computers", result.getCategory());
     }
 
     @Test
-    void getProductsShouldReturnAllProducts() {
+    void getProductByIdShouldReturnNullWhenProductDoesNotExist() {
+
+        // Act
+        Product result =
+                warehouseService.getProductById("does-not-exist");
+
+        // Assert
+        assertNull(result);
+    }
+
+    @Test
+    void getAllProductsShouldReturnAllProducts() {
 
         // Arrange
+        int productsBefore = warehouseService.getAllProducts().size();
+
         Product laptop = new Product(
-                "1",
-                "Laptop",
-                "Electronics",
-                10000.0,
-                5
+                "1", "Laptop", 10000.0, 5, "Computers"
         );
 
-        Product mouse = new Product(
-                "2",
-                "Mouse",
-                "Electronics",
-                500.0,
-                20
+        Product chair = new Product(
+                "2", "Chair", 1500.0, 10, "Furniture"
         );
 
         warehouseService.addProduct(laptop);
-        warehouseService.addProduct(mouse);
+        warehouseService.addProduct(chair);
 
         // Act
-        int numberOfProducts = warehouseService.getProducts().size();
+        int numberOfProducts =
+                warehouseService.getAllProducts().size();
 
         // Assert
-        assertEquals(2, numberOfProducts);
+        assertEquals(productsBefore + 2, numberOfProducts);
     }
+
     @Test
     void getProductsByCategoryShouldReturnOnlyMatchingProducts() {
 
         // Arrange
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 10000.0, 5
+        warehouseService.addProduct(
+                new Product(
+                        "1", "Laptop", 10000.0, 5, "TestCategory"
+                )
         );
 
-        Product mouse = new Product(
-                "2", "Mouse", "Electronics", 500.0, 20
+        warehouseService.addProduct(
+                new Product(
+                        "2", "Mouse", 500.0, 20, "TestCategory"
+                )
         );
 
-        Product chair = new Product(
-                "3", "Chair", "Furniture", 1500.0, 10
+        warehouseService.addProduct(
+                new Product(
+                        "3", "Chair", 1500.0, 10, "Furniture"
+                )
         );
-
-        warehouseService.addProduct(laptop);
-        warehouseService.addProduct(mouse);
-        warehouseService.addProduct(chair);
 
         // Act
         var result =
-                warehouseService.getProductsByCategory("Electronics");
+                warehouseService.getProductsByCategory("TestCategory");
 
         // Assert
         assertEquals(2, result.size());
-        assertTrue(result.contains(laptop));
-        assertTrue(result.contains(mouse));
-        assertFalse(result.contains(chair));
+
+        assertTrue(
+                result.stream()
+                        .allMatch(product ->
+                                product.getCategory().equals("TestCategory"))
+        );
     }
 
     @Test
     void getProductsBelowStockShouldReturnProductsBelowThreshold() {
 
         // Arrange
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 10000.0, 9
+        warehouseService.addProduct(
+                new Product(
+                        "1", "Laptop", 10000.0, 9, "Computers"
+                )
         );
 
-        Product mouse = new Product(
-                "2", "Mouse", "Electronics", 500.0, 10
+        warehouseService.addProduct(
+                new Product(
+                        "2", "Monitor", 5000.0, 10, "Computers"
+                )
         );
 
-        Product keyboard = new Product(
-                "3", "Keyboard", "Electronics", 1000.0, 11
+        warehouseService.addProduct(
+                new Product(
+                        "3", "Printer", 3000.0, 11, "Computers"
+                )
         );
-
-        warehouseService.addProduct(laptop);
-        warehouseService.addProduct(mouse);
-        warehouseService.addProduct(keyboard);
 
         // Act
-        var result = warehouseService.getProductsBelowStock(10);
+        var result =
+                warehouseService.getProductsBelowStock(10);
 
         // Assert
-        assertEquals(1, result.size());
-        assertTrue(result.contains(laptop));
-        assertFalse(result.contains(mouse));
-        assertFalse(result.contains(keyboard));
+        assertTrue(
+                result.stream()
+                        .anyMatch(product ->
+                                product.getName().equals("Laptop"))
+        );
+
+        assertFalse(
+                result.stream()
+                        .anyMatch(product ->
+                                product.getName().equals("Monitor"))
+        );
+
+        assertFalse(
+                result.stream()
+                        .anyMatch(product ->
+                                product.getName().equals("Printer"))
+        );
     }
+
     @Test
     void calculateTotalWarehouseValueShouldReturnCorrectValue() {
 
         // Arrange
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 10000.0, 2
+        double valueBefore =
+                warehouseService.calculateTotalWarehouseValue();
+
+        warehouseService.addProduct(
+                new Product(
+                        "1", "Laptop", 10000.0, 2, "Computers"
+                )
         );
 
-        Product mouse = new Product(
-                "2", "Mouse", "Electronics", 500.0, 10
+        warehouseService.addProduct(
+                new Product(
+                        "2", "Mouse", 500.0, 10, "Computers"
+                )
         );
 
-        Product keyboard = new Product(
-                "3", "Keyboard", "Electronics", 1000.0, 3
+        warehouseService.addProduct(
+                new Product(
+                        "3", "Keyboard Pro", 1000.0, 3, "Computers"
+                )
         );
-
-        warehouseService.addProduct(laptop);
-        warehouseService.addProduct(mouse);
-        warehouseService.addProduct(keyboard);
 
         // Act
-        double result = warehouseService.calculateTotalWarehouseValue();
+        double result =
+                warehouseService.calculateTotalWarehouseValue();
 
         // Assert
-        assertEquals(28000.0, result);
+        assertEquals(
+                valueBefore + 28000.0,
+                result,
+                0.001
+        );
     }
+
     @Test
     void getAveragePriceByCategoryShouldReturnCorrectAverage() {
 
         // Arrange
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 10000.0, 2
+        warehouseService.addProduct(
+                new Product(
+                        "1", "Laptop", 10000.0, 2, "TestCategory"
+                )
         );
 
-        Product mouse = new Product(
-                "2", "Mouse", "Electronics", 500.0, 10
+        warehouseService.addProduct(
+                new Product(
+                        "2", "Mouse", 500.0, 10, "TestCategory"
+                )
         );
 
-        Product keyboard = new Product(
-                "3", "Keyboard", "Electronics", 1500.0, 3
+        warehouseService.addProduct(
+                new Product(
+                        "3", "Keyboard Pro", 1500.0, 3, "TestCategory"
+                )
         );
 
-        Product chair = new Product(
-                "4", "Chair", "Furniture", 2000.0, 4
+        warehouseService.addProduct(
+                new Product(
+                        "4", "Chair", 2000.0, 4, "Furniture"
+                )
         );
-
-        warehouseService.addProduct(laptop);
-        warehouseService.addProduct(mouse);
-        warehouseService.addProduct(keyboard);
-        warehouseService.addProduct(chair);
 
         // Act
         double result =
-                warehouseService.getAveragePriceByCategory("Electronics");
+                warehouseService.getAveragePriceByCategory("TestCategory");
 
         // Assert
         assertEquals(4000.0, result, 0.001);
     }
+
     @Test
     void getTopExpensiveProductsShouldReturnMostExpensiveProductsFirst() {
 
         // Arrange
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 15000.0, 2
+        warehouseService.addProduct(
+                new Product(
+                        "1", "Laptop", 15000.0, 2, "Computers"
+                )
         );
 
-        Product tv = new Product(
-                "2", "TV", "Electronics", 10000.0, 4
+        warehouseService.addProduct(
+                new Product(
+                        "2", "TV", 10000.0, 4, "Electronics"
+                )
         );
 
-        Product monitor = new Product(
-                "3", "Monitor", "Electronics", 6000.0, 5
+        warehouseService.addProduct(
+                new Product(
+                        "3", "Monitor", 6000.0, 5, "Computers"
+                )
         );
-
-        Product keyboard = new Product(
-                "4", "Keyboard", "Electronics", 2000.0, 10
-        );
-
-        Product mouse = new Product(
-                "5", "Mouse", "Electronics", 500.0, 20
-        );
-
-        warehouseService.addProduct(laptop);
-        warehouseService.addProduct(tv);
-        warehouseService.addProduct(monitor);
-        warehouseService.addProduct(keyboard);
-        warehouseService.addProduct(mouse);
 
         // Act
-        var result = warehouseService.getTopExpensiveProducts(3);
+        var result =
+                warehouseService.getTopExpensiveProducts(3);
 
         // Assert
         assertEquals(3, result.size());
-        assertEquals(laptop, result.get(0));
-        assertEquals(tv, result.get(1));
-        assertEquals(monitor, result.get(2));
+
+        assertEquals("Laptop", result.get(0).getName());
+        assertEquals("TV", result.get(1).getName());
+        assertEquals("Monitor", result.get(2).getName());
     }
+
     @Test
     void updateProductShouldUpdateExistingProduct() {
 
         // Arrange
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 10000.0, 5
+        Product original = new Product(
+                "1", "Laptop", 10000.0, 5, "Computers"
         );
 
-        warehouseService.addProduct(laptop);
+        Product addedProduct =
+                warehouseService.addProduct(original);
 
         Product updatedLaptop = new Product(
-                "1", "Laptop", "Electronics", 9000.0, 8
+                "ignored",
+                "Laptop Pro",
+                9000.0,
+                8,
+                "Computers"
         );
 
         // Act
-        warehouseService.updateProduct("1", updatedLaptop);
+        Product updated =
+                warehouseService.updateProduct(
+                        addedProduct.getId(),
+                        updatedLaptop
+                );
 
         // Assert
-        Product result = warehouseService.getProductById("1");
-
-        assertEquals(updatedLaptop, result);
+        assertNotNull(updated);
+        assertEquals(addedProduct.getId(), updated.getId());
+        assertEquals("Laptop Pro", updated.getName());
+        assertEquals(9000.0, updated.getPrice());
+        assertEquals(8, updated.getQuantity());
     }
+
+    @Test
+    void updateProductShouldReturnNullWhenProductDoesNotExist() {
+
+        Product update = new Product(
+                "1",
+                "Laptop",
+                9000.0,
+                8,
+                "Computers"
+        );
+
+        Product result =
+                warehouseService.updateProduct(
+                        "does-not-exist",
+                        update
+                );
+
+        assertNull(result);
+    }
+
     @Test
     void deleteProductShouldOnlyRemoveSelectedProduct() {
 
-        Product laptop = new Product(
-                "1", "Laptop", "Electronics", 10000.0, 5
+        // Arrange
+        Product laptop =
+                warehouseService.addProduct(
+                        new Product(
+                                "1",
+                                "Laptop",
+                                10000.0,
+                                5,
+                                "Computers"
+                        )
+                );
+
+        Product chair =
+                warehouseService.addProduct(
+                        new Product(
+                                "2",
+                                "Chair",
+                                1500.0,
+                                10,
+                                "Furniture"
+                        )
+                );
+
+        int productsBefore =
+                warehouseService.getAllProducts().size();
+
+        // Act
+        Product deleted =
+                warehouseService.deleteProduct(laptop.getId());
+
+        // Assert
+        assertNotNull(deleted);
+
+        assertEquals(
+                productsBefore - 1,
+                warehouseService.getAllProducts().size()
         );
 
-        Product mouse = new Product(
-                "2", "Mouse", "Electronics", 500.0, 20
+        assertNull(
+                warehouseService.getProductById(laptop.getId())
         );
 
-        warehouseService.addProduct(laptop);
-        warehouseService.addProduct(mouse);
+        assertNotNull(
+                warehouseService.getProductById(chair.getId())
+        );
+    }
 
-        warehouseService.deleteProduct("1");
+    @Test
+    void deleteProductShouldReturnNullWhenProductDoesNotExist() {
 
-        assertEquals(1, warehouseService.getProducts().size());
-        assertTrue(warehouseService.getProducts().contains(mouse));
-        assertFalse(warehouseService.getProducts().contains(laptop));
+        Product result =
+                warehouseService.deleteProduct("does-not-exist");
+
+        assertNull(result);
     }
 }
