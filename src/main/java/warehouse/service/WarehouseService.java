@@ -69,22 +69,36 @@ public class WarehouseService {
     }
 
     public List<Product> getProductsByCategory(String category) {
-        return List.of();
+        return products.values().stream()
+                .filter(product -> product.getCategory().equalsIgnoreCase(category))
+                .toList();
     }
 
     public List<Product> getProductsBelowStock(int threshold) {
-        return List.of();
+        return products.values().stream()
+                .filter(product -> product.getQuantity() < threshold)
+                .toList();
     }
 
     public double calculateTotalWarehouseValue() {
-        return 0.0;
+        return products.values().stream()
+                .mapToDouble(product -> product.getPrice() * product.getQuantity())
+                .sum();
     }
 
     public double getAveragePriceByCategory(String category) {
-        return 0.0;
+        return products.values().stream()
+                .filter(product -> product.getCategory().equalsIgnoreCase(category))
+                .mapToDouble(Product::getPrice)
+                .average()
+                .orElse(0.0);
     }
 
     public List<Product> getTopExpensiveProducts(int n) {
-        return List.of();
+        return products.values().stream()
+                .sorted((product1, product2) ->
+                        Double.compare(product2.getPrice(), product1.getPrice()))
+                .limit(n)
+                .toList();
     }
 }
